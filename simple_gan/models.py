@@ -1,15 +1,15 @@
 import torch
 import torch.nn as nn
 
-class Discriminator(nn.Modules):
+class Discriminator(nn.Module):
 
     def __init__(self, image_dim:tuple):
 
         super().__init__()
         self.discriminator = nn.Sequential(
             nn.Linear(image_dim, 128),
-            nn.LeakyReLU(0.1),
-            nn.Linear(128, 1)
+            nn.LeakyReLU(0.01),
+            nn.Linear(128, 1),
             nn.Sigmoid(),
         )
 
@@ -17,14 +17,14 @@ class Discriminator(nn.Modules):
 
         return self.discriminator(x)
 
-class Generator(nn.Modules):
+class Generator(nn.Module):
 
     def __init__(self, noise_dim:int, image_dim:tuple):
 
         super().__init__()
         self.generator = nn.Sequential(
             nn.Linear(noise_dim, 256),
-            nn.LeakyReLU(0.1),
+            nn.LeakyReLU(0.01),
             nn.Linear(256, image_dim),
             nn.Tanh(),
         )

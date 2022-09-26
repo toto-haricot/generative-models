@@ -31,6 +31,7 @@ batch_size = config["training"]["batch_size"]
 # model parameters
 z = config["model"]["latent_dimension"]
 input_dim = config["model"]["input_dimension"]
+ckpt_path = config["checkpoint"]["path"]
 
 device = 'cuda' if torch.cuda.is_available() else 'cpu'
 
@@ -50,15 +51,18 @@ dataset = datasets.MNIST(root="dataset/", transform=transforms, download=True)
 dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
 
 # tensorboard setup
-writer_ae = SummaryWriter("runs/inputs_outputs")
-writer_loss = SummaryWriter("runs/loss")
+writer_ae = SummaryWriter("runs/version2/input_output")
+writer_loss = SummaryWriter("runs/version2/loss")
 step = 0
+
 
 # ----------------------------------------------------------------------------------------------------
 # TRAINING LOOP --------------------------------------------------------------------------------------
 # ----------------------------------------------------------------------------------------------------
 
 for epoch in range(n_epochs):
+
+    epoch_loss = 0
 
     for batch_idx, (real, nbr) in enumerate(dataloader):
 
@@ -70,14 +74,16 @@ for epoch in range(n_epochs):
         loss = criterion(input_images, rebuilt_images)
         loss.backward(retain_graph=True)
         optimizer.step()
-        writer_loss.add_scalar("Training loss", loss, step)
+
+        epoch_loss += loss.item()
 
         if batch_idx == 0:
 
-            print(
-                f"Epoch [{epoch}/{n_epochs}]"
-                f"Loss : {loss:.4f}\n"
-            )
+            if epoch == 0:
+                print(
+                    f"Epoch [{epoch}/{n_epochs}]\n"
+                    f"Loss : {loss.item():.4f}\n"
+                )
 
             inputs = input_images.reshape(-1, 1, 28, 28)
             outputs = rebuilt_images.reshape(-1, 1, 28, 28)
@@ -88,5 +94,17 @@ for epoch in range(n_epochs):
                 "MNIST outputs images", grid, global_step=epoch
             )
 
-        step += 1
+    epoch_loss /= len(dataloader)
+    print(
+        f"Epoch [{epoch+1}/{n_epochs}]\n"
+        f"Loss : {epoch_loss:.4f}\n"
+    )
+    writer_loss.add_scalar("Training loss", epoch_loss, step)
+    step += 1
 
+
+# ----------------------------------------------------------------------------------------------------
+# SAVING WEIGHTS -------------------------------------------------------------------------------------
+# ----------------------------------------------------------------------------------------------------
+
+torch.save(model.state_dict(), ckpt_path)

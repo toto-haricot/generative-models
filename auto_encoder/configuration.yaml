@@ -1,0 +1,11 @@
+training:
+  n_epochs: 500
+  batch_size: 32
+  learning_rate: 0.0003
+
+model:
+  latent_dimension: 64
+  input_dimension: 784
+
+checkpoint:
+  path: "~/Documents/github/generative_models/"

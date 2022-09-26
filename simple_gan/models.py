@@ -4,7 +4,6 @@ import torch.nn as nn
 class Discriminator(nn.Module):
 
     def __init__(self, image_dim:tuple):
-
         super().__init__()
         self.discriminator = nn.Sequential(
             nn.Linear(image_dim, 128),
@@ -14,13 +13,11 @@ class Discriminator(nn.Module):
         )
 
     def forward(self, x):
-
         return self.discriminator(x)
 
 class Generator(nn.Module):
 
     def __init__(self, noise_dim:int, image_dim:tuple):
-
         super().__init__()
         self.generator = nn.Sequential(
             nn.Linear(noise_dim, 256),
@@ -30,5 +27,4 @@ class Generator(nn.Module):
         )
 
     def forward(self, x):
-
         return self.generator(x)

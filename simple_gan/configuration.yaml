@@ -1,0 +1,8 @@
+training:
+  n_epochs: 400
+  batch_size: 32
+  learning_rate: 0.0003
+
+model:
+  latent_dimension: 64
+  image_dimension: 784

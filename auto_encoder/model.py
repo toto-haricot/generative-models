@@ -16,7 +16,7 @@ class AE(nn.Module):
             nn.Linear(latent_dim, input_dim//2),
             nn.ReLU(),
             nn.Linear(input_dim//2, input_dim),
-            nn.ReLU()
+            nn.Tanh()
         )
 
     def forward(self, x):

@@ -6,14 +6,17 @@ import yaml
 import torch
 import torchvision
 
+import numpy as np
 import torch.nn as nn
 import torch.optim as optim
 import torchvision.datasets as datasets
 import torchvision.transforms as transforms
 
 from model import *
+from tqdm import tqdm
 from torch.utils.data import DataLoader
 from torch.utils.tensorboard import SummaryWriter
+from torchvision.utils import save_image
 
 
 # ----------------------------------------------------------------------------------------------------
@@ -64,43 +67,57 @@ for epoch in range(n_epochs):
 
     epoch_loss = 0
 
-    for batch_idx, (real, nbr) in enumerate(dataloader):
+    with tqdm(dataloader, unit='batch') as tepoch:
 
-        input_images = real.view(-1, 784).to(device)
-        batch_size = real.shape[0]
-        
-        optimizer.zero_grad()
-        rebuilt_images = model(input_images)
-        loss = criterion(input_images, rebuilt_images)
-        loss.backward(retain_graph=True)
-        optimizer.step()
+        for batch_idx, (real, nbr) in enumerate(tepoch):
+            
+            input_images = real.view(-1, 784).to(device)
+            batch_size = real.shape[0]
+            
+            optimizer.zero_grad()
+            rebuilt_images = model(input_images)
+            loss = criterion(input_images, rebuilt_images)
+            loss.backward(retain_graph=True)
+            optimizer.step()
+            tepoch.set_postfix(loss=loss.item())
+            epoch_loss += loss.item()
 
-        epoch_loss += loss.item()
+            tepoch.set_description(f"Epoch [{epoch+1}/{n_epochs}]")
+            tepoch.set_postfix(loss=loss.item())
 
-        if batch_idx == 0:
+            # saving some reconstructions
+            # if step <= 10000: 
+            #     image_name = "iteration_" + (6-len(str(step)))*"0" + str(step) + ".png"
+            #     to_save = rebuilt_images.reshape(-1, 1, 28, 28)
 
-            if epoch == 0:
-                print(
-                    f"Epoch [{epoch}/{n_epochs}]\n"
-                    f"Loss : {loss.item():.4f}\n"
+            #     save_image(to_save, image_name)
+            
+            # grid of reconstruction
+            if batch_idx == 0:
+
+                if epoch == 0:
+                    print(
+                        f"Epoch [{epoch}/{n_epochs}]\n"
+                        f"Loss : {loss.item():.4f}\n"
+                    )
+
+                inputs = input_images.reshape(-1, 1, 28, 28)
+                outputs = rebuilt_images.reshape(-1, 1, 28, 28)
+                inputs_outputs = torch.cat((inputs, outputs), 0)
+                grid = torchvision.utils.make_grid(inputs_outputs, normalize=True)
+                
+                writer_ae.add_image(
+                    "MNIST outputs images", grid, global_step=epoch
                 )
 
-            inputs = input_images.reshape(-1, 1, 28, 28)
-            outputs = rebuilt_images.reshape(-1, 1, 28, 28)
-            inputs_outputs = torch.cat((inputs, outputs), 0)
-            grid = torchvision.utils.make_grid(inputs_outputs, normalize=True)
-            
-            writer_ae.add_image(
-                "MNIST outputs images", grid, global_step=epoch
-            )
+            step += 1
 
-    epoch_loss /= len(dataloader)
-    print(
-        f"Epoch [{epoch+1}/{n_epochs}]\n"
-        f"Loss : {epoch_loss:.4f}\n"
-    )
-    writer_loss.add_scalar("Training loss", epoch_loss, step)
-    step += 1
+        epoch_loss /= len(dataloader)
+        print(
+            f"Epoch [{epoch+1}/{n_epochs}]: Overall loss  {epoch_loss:.4f}"
+        )
+
+        writer_loss.add_scalar("Training loss", epoch_loss, step)
 
 
 # ----------------------------------------------------------------------------------------------------

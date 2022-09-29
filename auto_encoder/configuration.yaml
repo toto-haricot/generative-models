@@ -1,10 +1,10 @@
 training:
-  n_epochs: 500
+  n_epochs: 50
   batch_size: 32
   learning_rate: 0.0003
 
 model:
-  latent_dimension: 64
+  latent_dimension: 32
   input_dimension: 784
 
 checkpoint:
